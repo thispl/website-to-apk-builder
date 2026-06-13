@@ -103,7 +103,7 @@ class MainActivity : ComponentActivity() {
         const val PREFS_NAME = "app_prefs"
         const val KEY_DOMAIN = "saved_domain"
 //        const val DEFAULT_URL = "https://103.103.9.11/app"
-        const val DEFAULT_URL = "https://tntswa.teamproit.com/app"
+        const val DEFAULT_URL = "https://jobpro.teamprohr.com"
     }
 
     private var webViewRef: WebView? = null
