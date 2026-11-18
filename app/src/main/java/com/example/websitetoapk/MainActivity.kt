@@ -47,6 +47,93 @@ import androidx.core.app.NotificationManagerCompat
 
 
 
+// Idempotent: also installed as an interval so Frappe SPA route changes and
+// late-rendered pages still get it.
+private const val INJECT_SCRIPT = """
+(function() {
+    if (window.__appCssInjected) return;
+    if (!document.head) return;
+
+    if (!document.querySelector('meta[name="viewport"]')) {
+        var viewport = document.createElement('meta');
+        viewport.name = 'viewport';
+        viewport.content = 'width=device-width, initial-scale=1';
+        document.head.appendChild(viewport);
+    }
+
+    if (/\\/login\\/?$/.test(location.pathname) || document.getElementById('page-login')) {
+        document.documentElement.classList.add('app-webview-login');
+    }
+
+    var style = document.createElement('style');
+    style.id = 'app-webview-styles';
+    style.innerHTML = `
+        /* App centering */
+        #app {
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        html.app-webview-login,
+        html.app-webview-login body {
+            overflow-x: hidden;
+        }
+
+        @media (max-width: 991.98px) {
+            .navbar.navbar-expand-lg > .container > .navbar-brand {
+                flex: 1 1 0%;
+                min-width: 0;
+                margin-right: 0;
+                white-space: normal;
+            }
+
+            .navbar.navbar-expand-lg > .container > .navbar-brand > div {
+                box-sizing: border-box;
+                flex-wrap: wrap;
+                gap: 2px 12px;
+                padding: 6px 0 !important;
+            }
+
+            .navbar.navbar-expand-lg > .container > .navbar-brand > div > div[style*="margin-left"] {
+                margin-left: 0 !important;
+                white-space: normal !important;
+            }
+
+            .navbar.navbar-expand-lg > .container > .navbar-brand > div > div[style*="margin-left"] > span {
+                font-size: 14px !important;
+            }
+        }
+
+        /* 🔥 Frappe Dropdown height fix */
+        .awesomplete > ul {
+            max-height: 500px !important;
+            overflow-y: auto !important;
+            font-size: 18px !important;
+        }
+
+        .awesomplete > ul > li {
+            padding: 5px !important;
+        }
+
+        /* Select2 dropdown (Link fields) */
+        .select2-results__options {
+            max-height: 400px !important;
+            font-size: 18px !important;
+        }
+
+        .select2-results__option {
+            padding: 14px 18px !important;
+        }
+    `;
+    document.head.appendChild(style);
+    window.__appCssInjected = true;
+})();
+"""
+
 class MainActivity : ComponentActivity() {
 
     var fileCallback: ValueCallback<Array<Uri>>? = null
@@ -291,94 +378,20 @@ fun WebViewScreen(url: String, onWebViewCreated: (WebView) -> Unit) {
                                 return super.shouldInterceptRequest(view, request)
                             }
 
+                            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
+                                super.onPageStarted(view, url, favicon)
+                                view?.evaluateJavascript(INJECT_SCRIPT, null)
+                            }
+
                             override fun onPageFinished(view: WebView?, url: String?) {
                                 super.onPageFinished(view, url)
                                 isRefreshing = false
 
                                 view?.evaluateJavascript(
-                                    """
-(function() {
-    if (!document.head) return;
-
-    if (!document.querySelector('meta[name="viewport"]')) {
-        var viewport = document.createElement('meta');
-        viewport.name = 'viewport';
-        viewport.content = 'width=device-width, initial-scale=1';
-        document.head.appendChild(viewport);
-    }
-
-    if (/\/login\/?$/.test(location.pathname) || document.getElementById('page-login')) {
-        document.documentElement.classList.add('app-webview-login');
-    }
-
-    var style = document.createElement('style');
-    style.innerHTML = `
-        /* App centering */
-        #app {
-            display: flex !important;
-            justify-content: center !important;
-            align-items: center !important;
-            width: 100% !important;
-            max-width: 100% !important;
-            box-sizing: border-box !important;
-        }
-
-        html.app-webview-login,
-        html.app-webview-login body {
-            overflow-x: hidden;
-        }
-
-        @media (max-width: 991.98px) {
-            .navbar.navbar-expand-lg > .container > .navbar-brand {
-                flex: 1 1 0%;
-                min-width: 0;
-                margin-right: 0;
-                white-space: normal;
-            }
-
-            .navbar.navbar-expand-lg > .container > .navbar-brand > div {
-                box-sizing: border-box;
-                flex-wrap: wrap;
-                gap: 2px 12px;
-                padding: 6px 0 !important;
-            }
-
-            .navbar.navbar-expand-lg > .container > .navbar-brand > div > div[style*="margin-left"] {
-                margin-left: 0 !important;
-                white-space: normal !important;
-            }
-
-            .navbar.navbar-expand-lg > .container > .navbar-brand > div > div[style*="margin-left"] > span {
-                font-size: 14px !important;
-            }
-        }
-
-        /* 🔥 Frappe Dropdown height fix */
-        .awesomplete > ul {
-            max-height: 500px !important;
-            overflow-y: auto !important;
-            font-size: 18px !important;
-        }
-
-        .awesomplete > ul > li {
-            padding: 5px !important;
-        }
-
-        /* Select2 dropdown (Link fields) */
-        .select2-results__options {
-            max-height: 400px !important;
-            font-size: 18px !important;
-        }
-
-        .select2-results__option {
-            padding: 14px 18px !important;
-        }
-    `;
-    document.head.appendChild(style);
-})();
-""".trimIndent(),
+                                    "(function(){setInterval(function(){$INJECT_SCRIPT}, 500);})()",
                                     null
                                 )
+                                view?.evaluateJavascript(INJECT_SCRIPT, null)
 
                             }
 
