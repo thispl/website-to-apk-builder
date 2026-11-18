@@ -328,6 +328,31 @@ fun WebViewScreen(url: String, onWebViewCreated: (WebView) -> Unit) {
             overflow-x: hidden;
         }
 
+        @media (max-width: 991.98px) {
+            .navbar.navbar-expand-lg > .container > .navbar-brand {
+                flex: 1 1 0%;
+                min-width: 0;
+                margin-right: 0;
+                white-space: normal;
+            }
+
+            .navbar.navbar-expand-lg > .container > .navbar-brand > div {
+                box-sizing: border-box;
+                flex-wrap: wrap;
+                gap: 2px 12px;
+                padding: 6px 0 !important;
+            }
+
+            .navbar.navbar-expand-lg > .container > .navbar-brand > div > div[style*="margin-left"] {
+                margin-left: 0 !important;
+                white-space: normal !important;
+            }
+
+            .navbar.navbar-expand-lg > .container > .navbar-brand > div > div[style*="margin-left"] > span {
+                font-size: 14px !important;
+            }
+        }
+
         /* 🔥 Frappe Dropdown height fix */
         .awesomplete > ul {
             max-height: 500px !important;
