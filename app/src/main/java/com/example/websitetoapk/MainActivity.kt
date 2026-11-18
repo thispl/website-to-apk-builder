@@ -24,7 +24,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.example.websitetoapk.ui.theme.WebsiteToAPKTheme
@@ -155,6 +154,7 @@ fun WebViewScreen(url: String, onWebViewCreated: (WebView) -> Unit) {
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Black)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
         SwipeRefresh(
             state = rememberSwipeRefreshState(isRefreshing),
@@ -168,6 +168,8 @@ fun WebViewScreen(url: String, onWebViewCreated: (WebView) -> Unit) {
 
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
+                        settings.useWideViewPort = true
+                        settings.loadWithOverviewMode = true
                         settings.allowFileAccess = true
                         settings.allowContentAccess = true
                         settings.mediaPlaybackRequiresUserGesture = false
@@ -296,6 +298,19 @@ fun WebViewScreen(url: String, onWebViewCreated: (WebView) -> Unit) {
                                 view?.evaluateJavascript(
                                     """
 (function() {
+    if (!document.head) return;
+
+    if (!document.querySelector('meta[name="viewport"]')) {
+        var viewport = document.createElement('meta');
+        viewport.name = 'viewport';
+        viewport.content = 'width=device-width, initial-scale=1';
+        document.head.appendChild(viewport);
+    }
+
+    if (/\/login\/?$/.test(location.pathname) || document.getElementById('page-login')) {
+        document.documentElement.classList.add('app-webview-login');
+    }
+
     var style = document.createElement('style');
     style.innerHTML = `
         /* App centering */
@@ -303,9 +318,14 @@ fun WebViewScreen(url: String, onWebViewCreated: (WebView) -> Unit) {
             display: flex !important;
             justify-content: center !important;
             align-items: center !important;
-            height: 100vh !important;
-            width: 100vw !important;
-            overflow: hidden !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        html.app-webview-login,
+        html.app-webview-login body {
+            overflow-x: hidden;
         }
 
         /* 🔥 Frappe Dropdown height fix */
@@ -455,9 +475,7 @@ fun WebViewScreen(url: String, onWebViewCreated: (WebView) -> Unit) {
                         loadUrl(url)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 35.dp)
+                modifier = Modifier.fillMaxSize()
             )
         }
     }
