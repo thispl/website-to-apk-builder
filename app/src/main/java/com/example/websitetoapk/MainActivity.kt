@@ -61,7 +61,8 @@ private const val INJECT_SCRIPT = """
         document.head.appendChild(viewport);
     }
 
-    if (/\\/login\\/?$/.test(location.pathname) || document.getElementById('page-login')) {
+    var path = location.pathname.replace(/\/+$/, '');
+    if (path === '/login' || document.getElementById('page-login')) {
         document.documentElement.classList.add('app-webview-login');
     }
 
